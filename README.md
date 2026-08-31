@@ -46,23 +46,12 @@ npm run preview
 
 ---
 
-## 🌿 Commandes Git Flow pour la release
+## 🌐 Rendre le package GHCR public sur GitHub
 
-```bash
-# 1. Initialiser une release (ex: 1.0.0)
-git checkout -b release/1.0.0 develop
-
-# 2. Merger dans main (production)
-git checkout main
-git merge --no-ff release/1.0.0
-git tag -a v1.0.0 -m "Release v1.0.0"
-
-# 3. Merger dans develop (staging)
-git checkout develop
-git merge --no-ff release/1.0.0
-git branch -d release/1.0.0
-
-# 4. Pousser tout sur GitHub pour déclencher les workflows
-git push origin main --tags
-git push origin develop
-```
+Par défaut, GitHub crée les packages de conteneurs en privé liés au repository. Pour rendre l'image Docker publique (accessible sans authentification docker login) :
+1. Va sur ton profil GitHub ou à la racine de ton repository `EthanCarollo/guapa`.
+2. Clique sur l'onglet **Packages** (à droite ou dans ton profil).
+3. Sélectionne le package `guapa`.
+4. Clique sur **Package settings** (dans le menu latéral droit).
+5. Descends tout en bas dans la section **Danger Zone** -> **Change package visibility**.
+6. Sélectionne **Public** et valide.

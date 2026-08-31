@@ -92,7 +92,7 @@
 import { ref, computed } from 'vue'
 import { calculateDevopsScore, formatGitTag } from './utils/devops'
 
-const appVersion = ref('1.2.0')
+const appVersion = ref('1.3.0')
 const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'Staging / Local')
 const testsPassed = ref(7)
 const totalTests = ref(7)
