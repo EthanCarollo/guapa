@@ -7,3 +7,11 @@ coverage
 *.log
 .DS_Store
 .nuxtrc
+
+# Secrets & Credentials
+id.json
+*credentials*.json
+*service-account*.json
+*.key
+*.pem
+
