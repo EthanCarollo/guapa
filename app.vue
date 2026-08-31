@@ -1,20 +1,21 @@
 <template>
   <div class="app-container">
     <header class="header">
-      <div class="badge">🚀 TP DevOps CI/CD</div>
+      <div class="badge">🚀 TP DevOps CI/CD • v{{ appVersion }}</div>
       <h1>Guapa Continuous Delivery Platform</h1>
-      <p class="subtitle">Pipeline automatisé avec GitHub Actions, Docker (GHCR), Tests Vitest & Git Flow</p>
+      <p class="subtitle">Pipeline automatisé avec GitHub Actions, Docker (GHCR), Vitest & Git Flow</p>
     </header>
 
     <main class="dashboard">
+      <!-- Card Status -->
       <div class="card status-card">
-        <h2>Pipeline Status</h2>
+        <h2>Pipeline & System Status</h2>
         <div class="status-grid">
           <div class="status-item">
             <span class="dot active"></span>
             <div>
               <strong>Environnement Actuel</strong>
-              <p>{{ currentEnv }}</p>
+              <p>{{ currentEnv }} (Version: v{{ appVersion }})</p>
             </div>
           </div>
           <div class="status-item">
@@ -27,13 +28,14 @@
           <div class="status-item">
             <span class="dot active"></span>
             <div>
-              <strong>Conteneurisation</strong>
-              <p>ghcr.io/ethancarollo/guapa</p>
+              <strong>Conteneurisation OCI</strong>
+              <p>ghcr.io/ethancarollo/guapa:{{ currentTag }}</p>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Card DevOps Calculator -->
       <div class="card calculator-card">
         <h2>Simulateur Métriques DevOps</h2>
         <div class="inputs">
@@ -56,14 +58,41 @@
           <span :class="['status-tag', result.status.toLowerCase()]">{{ result.status }}</span>
         </div>
       </div>
+
+      <!-- Card Release Features (Nouveau Contenu v1.2.0) -->
+      <div class="card full-width release-card">
+        <h2>✨ Nouveautés & Pipeline Changelog (v{{ appVersion }})</h2>
+        <div class="features-grid">
+          <div class="feature-box">
+            <div class="feature-icon">🛡️</div>
+            <h3>Intégration Continue (CI)</h3>
+            <p>Exécution automatique des tests Vitest avec couverture de code et intégration Coveralls sur chaque pull request.</p>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon">🐳</div>
+            <h3>Docker Multi-stage & GHCR</h3>
+            <p>Image ultra-légère basée sur Node 24 Alpine avec labels OCI conformes et healthcheck intégré pour Nitro.</p>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon">🌿</div>
+            <h3>Git Flow Automation</h3>
+            <p>Séparation stricte entre les environnements Staging (<code>develop</code>) et Production (<code>main</code> + tags).</p>
+          </div>
+        </div>
+      </div>
     </main>
+
+    <footer class="footer">
+      <p>Projet Guapa DevOps réalisé par <strong>Ethan Carollo</strong> • Built with Nuxt 3 & Vite</p>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { calculateDevopsScore } from './utils/devops'
+import { calculateDevopsScore, formatGitTag } from './utils/devops'
 
+const appVersion = ref('1.2.0')
 const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'Staging / Local')
 const testsPassed = ref(7)
 const totalTests = ref(7)
@@ -71,6 +100,10 @@ const coverage = ref(100)
 
 const result = computed(() => {
   return calculateDevopsScore(testsPassed.value, totalTests.value, coverage.value)
+})
+
+const currentTag = computed(() => {
+  return formatGitTag(appVersion.value, process.env.NODE_ENV === 'production' ? 'production' : 'staging')
 })
 </script>
 
@@ -80,6 +113,7 @@ const result = computed(() => {
   --card-bg: rgba(22, 30, 49, 0.75);
   --border: rgba(255, 255, 255, 0.1);
   --primary: #38bdf8;
+  --primary-glow: rgba(56, 189, 248, 0.25);
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -96,6 +130,7 @@ const result = computed(() => {
 
 body {
   background-color: var(--bg);
+  background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b0f19 75%);
   color: var(--text);
   min-height: 100vh;
   display: flex;
@@ -105,8 +140,8 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 900px;
-  padding: 2rem;
+  max-width: 950px;
+  padding: 2.5rem 1.5rem;
 }
 
 .header {
@@ -116,23 +151,25 @@ body {
 
 .badge {
   display: inline-block;
-  background: rgba(56, 189, 248, 0.15);
+  background: var(--primary-glow);
   color: var(--primary);
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 1.1rem;
   border-radius: 9999px;
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 15px var(--primary-glow);
 }
 
 .header h1 {
-  font-size: 2.25rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -142,17 +179,21 @@ body {
 
 .dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 1.5rem;
 }
 
 .card {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: 1rem;
   padding: 1.75rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+}
+
+.card.full-width {
+  grid-column: 1 / -1;
 }
 
 .card h2 {
@@ -252,5 +293,49 @@ body {
 .status-tag.poor {
   background: rgba(239, 68, 68, 0.2);
   color: var(--danger);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.feature-box {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.feature-box:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.feature-box h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.feature-box p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.footer {
+  margin-top: 2.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 </style>
