@@ -1,0 +1,10 @@
+node_modules
+.output
+.nuxt
+.nitro
+dist
+coverage
+.git
+.github
+*.log
+.DS_Store
