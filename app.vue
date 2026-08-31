@@ -138,7 +138,10 @@
               </div>
               <div class="card-meta">
                 <p class="meta-prompt">{{ item.prompt }}</p>
-                <span class="meta-time">{{ item.time }}</span>
+                <div class="meta-sub">
+                  <span class="meta-seed">🎲 Seed: {{ item.seed }}</span>
+                  <span class="meta-time">{{ item.time }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -242,7 +245,7 @@ import { ref, computed } from 'vue'
 import { calculateDevopsScore } from './utils/devops'
 
 const activeTab = ref<'generator' | 'devops'>('generator')
-const appVersion = ref('1.5.0')
+const appVersion = ref('1.6.0')
 const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'Staging / Local')
 
 // FLUX Generation State
@@ -255,40 +258,12 @@ interface GeneratedImage {
   id: string
   url: string
   prompt: string
+  seed: number
   time: string
   selected: boolean
 }
 
-const generatedList = ref<GeneratedImage[]>([
-  {
-    id: 'gen-1',
-    url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=700&auto=format&fit=crop&q=85',
-    prompt: 'Koni Anime style, futuristic cyber samurai, neon katana, high quality 8k',
-    time: 'Il y a 2 min',
-    selected: true
-  },
-  {
-    id: 'gen-2',
-    url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=700&auto=format&fit=crop&q=85',
-    prompt: 'Ethereal anime princess in cosmic nebula gown, glowing stardust particles',
-    time: 'Il y a 5 min',
-    selected: true
-  },
-  {
-    id: 'gen-3',
-    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=700&auto=format&fit=crop&q=85',
-    prompt: 'Anime landscape, floating crystal islands over sunset sea, studio ghibli vibe',
-    time: 'Il y a 12 min',
-    selected: false
-  },
-  {
-    id: 'gen-4',
-    url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=700&auto=format&fit=crop&q=85',
-    prompt: 'Neon synthwave anime city alley, retro aesthetic, volumetric lighting',
-    time: 'Il y a 20 min',
-    selected: true
-  }
-])
+const generatedList = ref<GeneratedImage[]>([])
 
 const selectedImagesCount = computed(() => {
   return generatedList.value.filter(i => i.selected).length
@@ -309,18 +284,23 @@ function deselectAll() {
 async function generateImage() {
   if (!prompt.value.trim()) return
   generating.value = true
+  const randomSeed = Math.floor(Math.random() * 2147483647)
 
   try {
-    const res = await $fetch('/api/generate-image', {
+    const res = await $fetch<any>('/api/generate-image', {
       method: 'POST',
-      body: { prompt: prompt.value }
+      body: { 
+        prompt: prompt.value,
+        seed: randomSeed
+      }
     })
 
     if (res.success && res.imageUrl) {
       generatedList.value.unshift({
-        id: `gen-${Date.now()}`,
+        id: `gen-${Date.now()}-${randomSeed}`,
         url: res.imageUrl,
         prompt: prompt.value,
+        seed: res.seed || randomSeed,
         time: "À l'instant",
         selected: true
       })
@@ -338,7 +318,7 @@ async function sendSelectedToQueue() {
 
   queuing.value = true
   try {
-    const res = await $fetch('/api/zip', {
+    const res = await $fetch<any>('/api/zip', {
       method: 'POST',
       body: {
         images: selected.map(s => s.url),
@@ -346,7 +326,11 @@ async function sendSelectedToQueue() {
       }
     })
 
-    queueSuccessMessage.value = `${selected.length} image(s) sélectionnée(s) envoyée(s) dans le pipeline Cloud Storage & Pub/Sub.`
+    // Retirer les images envoyées de la galerie
+    const selectedIds = new Set(selected.map(s => s.id))
+    generatedList.value = generatedList.value.filter(item => !selectedIds.has(item.id))
+
+    queueSuccessMessage.value = `${selected.length} image(s) traitée(s) et retirée(s) de la file d'attente.`
   } catch (err: any) {
     queueSuccessMessage.value = `Erreur: ${err.message}`
   } finally {
@@ -518,6 +502,8 @@ body {
 
 .card-meta { padding: 1rem; }
 .meta-prompt { font-size: 0.85rem; color: var(--text-main); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.5rem; }
+.meta-sub { display: flex; justify-content: space-between; align-items: center; }
+.meta-seed { font-family: var(--font-mono); font-size: 0.72rem; color: var(--color-primary); background: rgba(56, 189, 248, 0.1); padding: 0.15rem 0.4rem; border-radius: 0.3rem; }
 .meta-time { font-size: 0.75rem; color: var(--text-sub); }
 
 /* Dashboard tab 2 */
