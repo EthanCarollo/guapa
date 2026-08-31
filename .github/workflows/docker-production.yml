@@ -47,6 +47,13 @@ jobs:
             type=raw,value=production
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+          labels: |
+            maintainer=Ethan Carollo
+            org.opencontainers.image.title=Guapa Production Image
+            org.opencontainers.image.description=Production Docker image for Guapa Nuxt 3 Platform
+            org.opencontainers.image.vendor=EthanCarollo
+            org.opencontainers.image.licenses=MIT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -55,3 +62,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
