@@ -8,6 +8,12 @@ coverage
 .DS_Store
 .nuxtrc
 
+# Environment variables
+.env
+.env.*
+!.env.sample
+!.env.example
+
 # Secrets & Credentials
 id.json
 *credentials*.json
