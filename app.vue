@@ -131,6 +131,7 @@
             >
               <div class="card-image-wrap">
                 <img :src="item.url" :alt="item.prompt" loading="lazy" />
+                <div class="image-loader-shimmer"></div>
                 <div class="selection-checkbox">
                   <span v-if="item.selected">✓</span>
                 </div>
@@ -245,7 +246,7 @@ import { ref, computed } from 'vue'
 import { calculateDevopsScore } from './utils/devops'
 
 const activeTab = ref<'generator' | 'devops'>('generator')
-const appVersion = ref('1.6.0')
+const appVersion = ref('1.7.0')
 const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'Staging / Local')
 
 // FLUX Generation State
@@ -491,8 +492,10 @@ body {
 .anime-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.6); }
 .anime-card.is-selected { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary), 0 10px 25px -5px rgba(56, 189, 248, 0.4); }
 
-.card-image-wrap { position: relative; width: 100%; height: 260px; overflow: hidden; background: #000; }
-.card-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.card-image-wrap { position: relative; width: 100%; height: 260px; overflow: hidden; background: #0e1626; }
+.card-image-wrap img { position: relative; z-index: 2; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; background-color: #0e1626; }
+.image-loader-shimmer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, #0e1626 0%, #1e293b 50%, #0e1626 100%); background-size: 200% 100%; animation: shimmer 1.5s infinite; z-index: 1; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .anime-card:hover .card-image-wrap img { transform: scale(1.05); }
 
 .selection-checkbox { position: absolute; top: 0.75rem; right: 0.75rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(7, 9, 14, 0.75); border: 2px solid #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 0.85rem; backdrop-filter: blur(6px); }
