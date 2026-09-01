@@ -1,5 +1,55 @@
 [
   {
+    "id": "gen-1788262819609-226081795",
+    "filename": "flux-1788262819609-226081795.jpg",
+    "url": "/generated/flux-1788262819609-226081795.jpg",
+    "prompt": "neon samurai in futuristic Tokyo",
+    "seed": 226081795,
+    "engine": "FLUX Accelerated Pipeline (Fallback)",
+    "time": "13:40:19",
+    "date": "2026-09-01T11:40:19.609Z"
+  },
+  {
+    "id": "gen-1788262644675-1750890112",
+    "filename": "flux-1788262644674-1750890112.jpg",
+    "url": "/generated/flux-1788262644674-1750890112.jpg",
+    "prompt": "cyberpunk",
+    "seed": 1750890112,
+    "engine": "FLUX Accelerated Pipeline (Fallback)",
+    "time": "13:37:24",
+    "date": "2026-09-01T11:37:24.675Z"
+  },
+  {
+    "id": "gen-1788262599345-883688715",
+    "filename": "flux-1788262599341-883688715.jpg",
+    "url": "/generated/flux-1788262599341-883688715.jpg",
+    "prompt": "cyberpunk",
+    "seed": 883688715,
+    "engine": "FLUX Accelerated Pipeline (Fallback)",
+    "time": "13:36:39",
+    "date": "2026-09-01T11:36:39.345Z"
+  },
+  {
+    "id": "gen-1788262506514-1032590350",
+    "filename": "flux-1788262506513-1032590350.jpg",
+    "url": "/generated/flux-1788262506513-1032590350.jpg",
+    "prompt": "cyberpunk anime girl with glowing cyan hair, holographic headphones, rain reflection, vibrant colors",
+    "seed": 1032590350,
+    "engine": "FLUX Accelerated Pipeline (Fallback)",
+    "time": "13:35:06",
+    "date": "2026-09-01T11:35:06.515Z"
+  },
+  {
+    "id": "gen-1788249632652-1899234047",
+    "filename": "flux-1788249632648-1899234047.jpg",
+    "url": "/generated/flux-1788249632648-1899234047.jpg",
+    "prompt": "cyberpunk anime girl with glowing cyan hair, holographic headphones, rain reflection, vibrant colors",
+    "seed": 1899234047,
+    "engine": "FLUX Accelerated Pipeline (Fallback)",
+    "time": "10:00:32",
+    "date": "2026-09-01T08:00:32.653Z"
+  },
+  {
     "id": "gen-1788249543356-921486834",
     "filename": "flux-1788249543356-921486834.jpg",
     "url": "/generated/flux-1788249543356-921486834.jpg",
