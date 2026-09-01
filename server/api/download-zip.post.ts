@@ -1,9 +1,10 @@
-import archiver from 'archiver'
 import fs from 'node:fs'
 import path from 'node:path'
 import { PassThrough } from 'node:stream'
 
 export default defineEventHandler(async (event) => {
+  const archiverModule: any = await import('archiver')
+  const createArchiver = archiverModule.default || archiverModule
   const body = await readBody(event)
   const images: string[] = body?.images || []
   const tags: string = body?.tags || 'flux-anime-archive'
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Content-Disposition', `attachment; filename="${filename}"`)
   setHeader(event, 'Cache-Control', 'no-cache')
 
-  const archive = archiver('zip', {
+  const archive = createArchiver('zip', {
     zlib: { level: 9 } // Niveau de compression maximal
   })
 
