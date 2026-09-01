@@ -119,6 +119,14 @@
             <div class="gallery-actions">
               <button class="btn btn-sm btn-outline" @click="selectAll">Tout sélectionner</button>
               <button class="btn btn-sm btn-outline" @click="deselectAll">Tout désélectionner</button>
+              <button 
+                class="btn btn-sm btn-primary" 
+                :disabled="selectedImagesCount === 0 || downloadingZip" 
+                @click="downloadZipStream"
+              >
+                <span v-if="!downloadingZip">⬇️ Télécharger ZIP Stream ({{ selectedImagesCount }})</span>
+                <span v-else class="flex-align"><span class="spinner"></span> Compression du stream...</span>
+              </button>
             </div>
           </div>
 
@@ -242,11 +250,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { calculateDevopsScore } from './utils/devops'
 
 const activeTab = ref<'generator' | 'devops'>('generator')
-const appVersion = ref('1.7.0')
+const appVersion = ref('1.8.0')
 const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'Staging / Local')
 
 // FLUX Generation State
@@ -265,6 +273,25 @@ interface GeneratedImage {
 }
 
 const generatedList = ref<GeneratedImage[]>([])
+
+// Charger toutes les images générées conservées sur le disque
+async function loadStoredImages() {
+  try {
+    const res = await $fetch<{ images: any[] }>('/api/images')
+    if (res.images && res.images.length > 0) {
+      generatedList.value = res.images.map(img => ({
+        ...img,
+        selected: false
+      }))
+    }
+  } catch (err) {
+    console.error('Erreur chargement images stockées', err)
+  }
+}
+
+onMounted(() => {
+  loadStoredImages()
+})
 
 const selectedImagesCount = computed(() => {
   return generatedList.value.filter(i => i.selected).length
@@ -296,14 +323,14 @@ async function generateImage() {
       }
     })
 
-    if (res.success && res.imageUrl) {
+    if (res.success && res.url) {
       generatedList.value.unshift({
-        id: `gen-${Date.now()}-${randomSeed}`,
-        url: res.imageUrl,
-        prompt: prompt.value,
+        id: res.id || `gen-${Date.now()}-${randomSeed}`,
+        url: res.url,
+        prompt: res.prompt || prompt.value,
         seed: res.seed || randomSeed,
-        time: "À l'instant",
-        selected: true
+        time: res.time || "À l'instant",
+        selected: false
       })
     }
   } catch (err) {
@@ -336,6 +363,46 @@ async function sendSelectedToQueue() {
     queueSuccessMessage.value = `Erreur: ${err.message}`
   } finally {
     queuing.value = false
+  }
+}
+
+const downloadingZip = ref(false)
+
+async function downloadZipStream() {
+  const selected = generatedList.value.filter(i => i.selected)
+  if (selected.length === 0) return
+
+  downloadingZip.value = true
+  try {
+    const response = await fetch('/api/download-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        images: selected.map(s => s.url),
+        tags: 'flux-koni-selection'
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erreur téléchargement (${response.statusText})`)
+    }
+
+    const blob = await response.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = `flux-anime-archive-${Date.now()}.zip`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+
+    queueSuccessMessage.value = `Archive ZIP (${selected.length} images) téléchargée avec succès en flux continu !`
+  } catch (err: any) {
+    console.error('Erreur download ZIP:', err)
+    queueSuccessMessage.value = `Erreur lors du téléchargement : ${err.message}`
+  } finally {
+    downloadingZip.value = false
   }
 }
 
