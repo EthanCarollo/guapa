@@ -78,6 +78,11 @@
               placeholder="Décrivez votre illustration anime (ex: 1girl, sakura tree, sunset breeze, highly detailed)..."
             ></textarea>
             <div class="prompt-actions">
+              <label class="auto-download-toggle">
+                <input type="checkbox" v-model="autoDownloadZip" />
+                <span>⚡ Auto-téléchargement ZIP en flux</span>
+              </label>
+
               <button 
                 class="btn btn-primary" 
                 :disabled="generating || !prompt.trim()" 
@@ -92,8 +97,8 @@
                 :disabled="selectedImagesCount === 0 || queuing" 
                 @click="sendSelectedToQueue"
               >
-                <span v-if="!queuing">📦 Envoyer la sélection au Worker ({{ selectedImagesCount }})</span>
-                <span v-else class="flex-align"><span class="spinner"></span> Publication Pub/Sub...</span>
+                <span v-if="!queuing">📦 Envoyer & Télécharger ZIP ({{ selectedImagesCount }})</span>
+                <span v-else class="flex-align"><span class="spinner"></span> Traitement & Stream ZIP...</span>
               </button>
             </div>
           </div>
@@ -261,6 +266,8 @@ const currentEnv = ref(process.env.NODE_ENV === 'production' ? 'Production' : 'S
 const prompt = ref('cyberpunk anime girl with glowing cyan hair, holographic headphones, rain reflection, vibrant colors')
 const generating = ref(false)
 const queuing = ref(false)
+const downloadingZip = ref(false)
+const autoDownloadZip = ref(true)
 const queueSuccessMessage = ref('')
 
 interface GeneratedImage {
@@ -324,14 +331,15 @@ async function generateImage() {
     })
 
     if (res.success && res.url) {
-      generatedList.value.unshift({
+      const newImg: GeneratedImage = {
         id: res.id || `gen-${Date.now()}-${randomSeed}`,
         url: res.url,
         prompt: res.prompt || prompt.value,
         seed: res.seed || randomSeed,
         time: res.time || "À l'instant",
-        selected: false
-      })
+        selected: true
+      }
+      generatedList.value.unshift(newImg)
     }
   } catch (err) {
     console.error('Erreur génération', err)
@@ -346,6 +354,12 @@ async function sendSelectedToQueue() {
 
   queuing.value = true
   try {
+    // 1. Déclencher le téléchargement direct du ZIP en stream si l'option est active
+    if (autoDownloadZip.value) {
+      await downloadZipStream(selected)
+    }
+
+    // 2. Publication au Worker Pub/Sub
     const res = await $fetch<any>('/api/zip', {
       method: 'POST',
       body: {
@@ -354,11 +368,11 @@ async function sendSelectedToQueue() {
       }
     })
 
-    // Retirer les images envoyées de la galerie
+    // 3. Retirer les images envoyées de la sélection active
     const selectedIds = new Set(selected.map(s => s.id))
     generatedList.value = generatedList.value.filter(item => !selectedIds.has(item.id))
 
-    queueSuccessMessage.value = `${selected.length} image(s) traitée(s) et retirée(s) de la file d'attente.`
+    queueSuccessMessage.value = `${selected.length} image(s) archivée(s), téléchargée(s) et transmise(s) au Worker avec succès !`
   } catch (err: any) {
     queueSuccessMessage.value = `Erreur: ${err.message}`
   } finally {
@@ -366,10 +380,8 @@ async function sendSelectedToQueue() {
   }
 }
 
-const downloadingZip = ref(false)
-
-async function downloadZipStream() {
-  const selected = generatedList.value.filter(i => i.selected)
+async function downloadZipStream(customList?: GeneratedImage[]) {
+  const selected = customList || generatedList.value.filter(i => i.selected)
   if (selected.length === 0) return
 
   downloadingZip.value = true
@@ -379,7 +391,7 @@ async function downloadZipStream() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         images: selected.map(s => s.url),
-        tags: 'flux-koni-selection'
+        tags: 'flux-koni-archive'
       })
     })
 
@@ -391,13 +403,11 @@ async function downloadZipStream() {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `flux-anime-archive-${Date.now()}.zip`
+    link.download = `flux-anime-${Date.now()}.zip`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
-
-    queueSuccessMessage.value = `Archive ZIP (${selected.length} images) téléchargée avec succès en flux continu !`
   } catch (err: any) {
     console.error('Erreur download ZIP:', err)
     queueSuccessMessage.value = `Erreur lors du téléchargement : ${err.message}`
@@ -527,8 +537,10 @@ body {
 .pill-btn:hover { background: rgba(56, 189, 248, 0.15); color: var(--color-primary); border-color: rgba(56, 189, 248, 0.3); }
 
 .prompt-input-group textarea { width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); border-radius: 0.85rem; padding: 1rem; color: #fff; font-size: 1rem; outline: none; resize: vertical; margin-bottom: 1rem; transition: border-color 0.2s; }
-.prompt-input-group textarea:focus { border-color: var(--color-primary); }
-.prompt-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
+.prompt-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.auto-download-toggle { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--color-primary); background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); padding: 0.6rem 1rem; border-radius: 0.75rem; cursor: pointer; user-select: none; transition: all 0.2s; }
+.auto-download-toggle input { accent-color: var(--color-primary); width: 16px; height: 16px; cursor: pointer; }
+.auto-download-toggle:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--color-primary); }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem 1.5rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.2s ease; text-decoration: none; }
